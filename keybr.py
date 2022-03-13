@@ -3,6 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException 
 import time
 
 class KeybrBot:
@@ -24,15 +25,23 @@ class KeybrBot:
             pass
     
     def multiplayer_loop(self):
-        for i in range(10): 
+        for i in range(100): 
             self.wait_for_multiplayer()
-            print("done waiting!") 
-            for key in self.get_keys(): 
-                if key == ' ':
-                    self.driver.find_element(by=By.TAG_NAME, value='input').send_keys(Keys.SPACE)
-                else:
-                    self.driver.find_element(by=By.TAG_NAME, value='input').send_keys(key)
-                time.sleep(0.001) 
+            try:
+                self.activate_input()
+            except NoSuchElementException:
+                pass 
+
+            finally:
+                keys = self.get_keys() 
+                for key_num, key in enumerate(keys):  
+                    if key == ' ':
+                        self.driver.find_element(by=By.TAG_NAME, value='input').send_keys(Keys.SPACE)
+                    else:
+                        self.driver.find_element(by=By.TAG_NAME, value='input').send_keys(key)
+
+                    sleep = 0.001 if key_num >= len(keys)//10 else 0.1 # keep it interesting 
+                    time.sleep(sleep ) 
 
     # () -> [String] || void 
     # Purpose: Get words user must type 
@@ -64,8 +73,9 @@ class KeybrBot:
         return keys
     # loop num param is the number of times this will complete a full typing iteration. 
     def typing_loop(self, loop_num):
-        for i in range(loop_num): 
-            for key in self.get_keys(): 
+        for i in range(loop_num):
+            for key in self.get_keys():
+                
                 if key == ' ':
                     self.driver.find_element(by=By.TAG_NAME, value='input').send_keys(Keys.SPACE)  
                 else:
